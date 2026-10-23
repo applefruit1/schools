@@ -1,0 +1,43 @@
+
+name: Generate SVG and Links
+
+on:
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "Number of SVG files to generate"
+        required: true
+        default: "10"
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate requested count
+        env:
+          COUNT: ${{ inputs.count }}
+        run: |
+          python -c "import os; n=int(os.environ['COUNT']); assert 1 <= n <= 1000, 'Count must be between 1 and 1000'"
+
+      - name: Generate and publish SVG
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          COUNT: ${{ inputs.count }}
+        run: python scripts/generate_svg.py
